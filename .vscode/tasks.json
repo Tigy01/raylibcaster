@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "go: build current package",
+            "command": "go",
+            "args": [
+                "build",
+                "-tags x11",
+                "-o ./bin/",
+                "./cmd/mygame"
+            ],
+            "problemMatcher": [
+                "$go"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "cd /home/fedora-g14/Documents/Projects/Go/raylibcaster; go build -tags x11 -o ./bin/; ./bin/*"
+        },
+        {
+            "type": "shell",
+            "label": "go: build and run current package",
+            "command": "go",
+            "args": [
+                "build",
+                "-tags x11",
+                "-o ./bin/",
+                "./cmd/raylibcaster;",
+                "./bin/*"
+            ],
+            "problemMatcher": [
+                "$go"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "cd /home/fedora-g14/Documents/Projects/Go/raylibcaster; go build -tags x11 -o ./bin/; ./bin/*"
+        }
+    ]
+}
