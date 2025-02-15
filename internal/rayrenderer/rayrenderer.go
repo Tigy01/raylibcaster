@@ -9,7 +9,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-const RESOLUTION = 4.0
+const RESOLUTION = 1.0
 const RAYOFFSET = rl.Deg2rad / RESOLUTION
 
 var lineWidth int = RESOLUTION
@@ -21,11 +21,13 @@ var currentFrame []color.RGBA
 
 func DrawRays3D(renderTexture rl.RenderTexture2D, p player.Player, screenResolution rl.Vector2) {
 	screenRes = screenResolution
-	RenderRes = screenResolution//rl.Vector2Scale(screenRes, 1/RESOLUTION)
+	RenderRes = screenResolution //rl.Vector2Scale(screenRes, 1/RESOLUTION)
 	RenderResXInt = int(RenderRes.X)
 
 	distToPlane := calcDistanceToViewPlane(float64(p.FOV))
 	currentFrame = make([]color.RGBA, int(RenderRes.X*RenderRes.Y))
+
+	doneChan := make(chan bool, int(RenderRes.X))
 
 	for r := range int(RenderRes.X) {
 		rayAngle := calcNextViewAngle(distToPlane, float64(r)) + p.Angle
@@ -36,7 +38,10 @@ func DrawRays3D(renderTexture rl.RenderTexture2D, p player.Player, screenResolut
 			rayAngle -= 2 * math.Pi
 		}
 
-		drawRayWall3D(p, rayAngle, r)
+		go drawRayWall3D(p, rayAngle, r, doneChan)
+	}
+	for range cap(doneChan) {
+		<-doneChan
 	}
 	rl.UpdateTexture(renderTexture.Texture, currentFrame)
 }
@@ -58,7 +63,7 @@ func calcNextViewAngle(distToPlane float64, rayNumber float64) float64 {
 	return math.Atan2(float64(rayNumber)-0.5-float64(RenderRes.X)/2, distToPlane)
 }
 
-func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int) {
+func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan chan bool) {
 	hRay, _, minRay := castRayFromPosition(p.Position, rayAngle)
 	rayLen := rl.Vector2Length(rl.Vector2Subtract(minRay, p.Position))
 
@@ -72,16 +77,18 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int) {
 	rayLen *= float32(math.Cos(angleDelta)) // fix warping
 
 	lineH := float32(levelmap.MapScale) * RenderRes.Y / rayLen
-//	var textureYOff float32 = 0
+
+	cellType := levelmap.GetMapCellFromPosition(minRay)
+	ty_step := float32(levelmap.Images[cellType].Bounds().Dy()) / lineH
+
+	var textureYOff float32 = 0
 
 	if lineH > RenderRes.Y {
-//		textureYOff = (lineH - RenderRes.Y) / 2.0
+		textureYOff = (lineH - RenderRes.Y) / 2.0
 		lineH = RenderRes.Y
 	}
 
 	lineO := RenderRes.Y/2 - lineH/2
-
-	cellType := levelmap.GetMapCellFromPosition(minRay)
 
 	var textureX int
 	if rl.Vector2Equals(minRay, hRay) {
@@ -91,33 +98,27 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int) {
 	}
 
 	if levelmap.IsOnMap(minRay) {
-		MapTextureToFrame(textureX, 0, rayNumber, int(lineO), float32(lineWidth), lineH)
+		MapTextureToFrame(textureX, ty_step*textureYOff, ty_step, rayNumber*lineWidth, lineO, lineH)
 	}
+    doneChan<- true
 }
 
-func MapTextureToFrame(textureX int, textureYOffset float32, rayNumber, lineO int, lineWidth, lineH float32) {
-	pixelH := lineH / float32(levelmap.Images[1].Bounds().Dy())
-	for textureY := float32(0); textureY < float32(levelmap.Images[1].Bounds().Dy()); textureY += 1 {
-		c := levelmap.Images[1].At(textureX, int(textureY))
-		r, g, b, a := c.RGBA()
-		rgba := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
-
-		DrawRectToFrame(rayNumber, lineO+int(textureY*pixelH), lineWidth, float32(pixelH), rgba)
-	}
-}
-
-func DrawRectToFrame(x, y int, width, height float32, color color.RGBA) {
-	for ho := float32(0); ho < height; ho += 1 {
-		for wo := float32(0); wo < width; wo += 1 {
-			DrawColorToFrame(x+int(wo), y+int(ho), color)
+func MapTextureToFrame(textureX int, textureY, step float32, x int, lineO, lineH float32) {
+	oldTy := 0
+	var rgba color.RGBA
+	for y := float32(0); y < lineH; y++ {
+		if oldTy != int(textureY) {
+			c := levelmap.Images[1].At(textureX, int(textureY))
+			r, g, b, a := c.RGBA()
+			rgba = color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+			oldTy = int(textureY)
 		}
+		DrawColorToFrame(x, int(y+lineO), rgba)
+		textureY += step
 	}
 }
 
 func DrawColorToFrame(x, y int, color color.RGBA) {
-	if x < 0 || x >= RenderResXInt || y < 0 || y >= int(RenderRes.Y) {
-		return
-	}
 	index := y*RenderResXInt + x
 	currentFrame[index] = color
 }

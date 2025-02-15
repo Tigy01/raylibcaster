@@ -27,11 +27,14 @@ func main() {
 	levelmap.LoadWallImage("./assets/brick.png", 1)
 
 	renderTex := rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()))
-    file,err:=os.Create("./pprof")
-    if err != nil {
-        return 
-    }
-    pprof.StartCPUProfile(file)
+	file, err := os.Create("./pprof")
+	if err != nil {
+		return
+	}
+	pprof.StartCPUProfile(file)
+
+	averageFPS := float64(0)
+	frameCount := float64(0)
 	for !rl.WindowShouldClose() {
 		p.Input()
 		p.Process()
@@ -64,12 +67,16 @@ func main() {
 			0,
 			color.RGBA{255, 255, 255, 255})
 		rl.DrawText(
-			fmt.Sprint(rl.GetFPS()),
+			fmt.Sprint("average: ", averageFPS, fmt.Sprint("\ncurrent: ", rl.GetFPS())),
 			0, 0, 32, rl.Black,
 		)
 		rl.EndDrawing()
+
+		frameCount += 1
+
+		averageFPS = averageFPS*(frameCount-1)/frameCount + float64(rl.GetFPS())/frameCount
 	}
-    pprof.StopCPUProfile()
+	pprof.StopCPUProfile()
 
 	rl.CloseWindow()
 }
