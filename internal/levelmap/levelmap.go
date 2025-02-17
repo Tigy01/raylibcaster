@@ -1,10 +1,10 @@
 package levelmap
 
 import (
-	"image"
 	"image/color"
 	"image/png"
 	"os"
+	"sync"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -13,17 +13,18 @@ var MapScale int32 = 64
 var MapX int32 = 8
 var MapY int32 = 8
 var Map = []int{
-	1, 2, 2, 2, 2, 2, 2, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 2, 1, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
-	1, 0, 0, 0, 0, 0, 0, 1,
 	1, 1, 1, 1, 1, 1, 1, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 2, 1, 1, 0, 1,
+	1, 0, 0, 2, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 0, 0, 0, 0, 0, 0, 1,
+	1, 1, 2, 1, 1, 1, 1, 1,
 }
 
-var Images = map[int]image.Image{}
+
+var Images sync.Map
 
 func DrawMap() {
 	for y := range MapY {
@@ -75,7 +76,8 @@ func LoadWallImage(path string, id int) (err error) {
 	if err != nil {
 		return err
 	}
-	Images[id] = wallImage
+
+    Images.LoadOrStore(id, wallImage)
 	wallFile.Close()
 	return nil
 }
