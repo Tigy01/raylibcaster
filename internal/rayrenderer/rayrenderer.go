@@ -14,8 +14,8 @@ import (
 var RenderRes rl.Vector2
 var currentFrame []color.RGBA
 
-func DrawRays3D(renderTexture rl.RenderTexture2D, p player.Player, screenResolution rl.Vector2) {
-	RenderRes = screenResolution //rl.Vector2Scale(screenRes, 1/RESOLUTION)
+func DrawRays3D(renderTexture rl.RenderTexture2D, p player.Player) {
+	RenderRes = rl.NewVector2(float32(renderTexture.Texture.Width), float32(renderTexture.Texture.Height)) //rl.Vector2Scale(screenRes, 1/RESOLUTION)
 
 	distToPlane := calcDistanceToViewPlane(float64(p.FOV))
 	currentFrame = make([]color.RGBA, int(RenderRes.X*RenderRes.Y))

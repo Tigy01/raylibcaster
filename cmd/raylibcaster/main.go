@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"image/color"
-	"os"
 	"raylibcaster/internal/levelmap"
 	"raylibcaster/internal/player"
 	"raylibcaster/internal/rayrenderer"
-	"runtime/pprof"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -26,12 +24,6 @@ func main() {
 	levelmap.LoadWallImage("./assets/wall32Test.png", 2)
 	levelmap.LoadWallImage("./assets/brickTest.png", 1)
 
-	file, err := os.Create("./pprof")
-	if err != nil {
-		return
-	}
-	pprof.StartCPUProfile(file)
-
 	averageFPS := float64(0)
 	frameCount := float64(0)
 	for !rl.WindowShouldClose() {
@@ -44,32 +36,17 @@ func main() {
 
 		rl.BeginTextureMode(renderTex)
 
-		rayrenderer.DrawRays3D(renderTex, *p, resolution)
+		rayrenderer.DrawRays3D(renderTex, *p)
 
 		rl.EndTextureMode()
+
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Gray)
 
-		rl.DrawTexturePro(renderTex.Texture, rl.Rectangle{
-			X:      0,
-			Y:      float32(renderTex.Texture.Height),
-			Width:  float32(renderTex.Texture.Width),
-			Height: float32(-renderTex.Texture.Height),
-		},
-			rl.Rectangle{
-				X:      0,
-				Y:      0,
-				Width:  float32(rl.GetScreenWidth()),
-				Height: float32(rl.GetScreenHeight()),
-			},
-			rl.Vector2{
-				X: 0,
-				Y: 0,
-			},
-			0,
-			color.RGBA{255, 255, 255, 255})
+		drawRenderTexture(renderTex)
+
 		rl.DrawText(
-			fmt.Sprintf("average: %0.2f\ncurrent: %d", averageFPS, rl.GetFPS()),
+			fmt.Sprintf("average: %0.0f\ncurrent: %d", averageFPS, rl.GetFPS()),
 			0, 0, 32, rl.Black,
 		)
 		rl.EndDrawing()
@@ -79,7 +56,27 @@ func main() {
 		averageFPS = averageFPS*(frameCount-1)/frameCount + float64(rl.GetFPS())/frameCount
 		rl.UnloadRenderTexture(renderTex)
 	}
-	pprof.StopCPUProfile()
 
 	rl.CloseWindow()
+}
+
+func drawRenderTexture(renderTex rl.RenderTexture2D) {
+	rl.DrawTexturePro(renderTex.Texture, rl.Rectangle{
+		X:      0,
+		Y:      float32(renderTex.Texture.Height),
+		Width:  float32(renderTex.Texture.Width),
+		Height: float32(-renderTex.Texture.Height),
+	},
+		rl.Rectangle{
+			X:      0,
+			Y:      0,
+			Width:  float32(rl.GetScreenWidth()),
+			Height: float32(rl.GetScreenHeight()),
+		},
+		rl.Vector2{
+			X: 0,
+			Y: 0,
+		},
+		0,
+		color.RGBA{255, 255, 255, 255})
 }
