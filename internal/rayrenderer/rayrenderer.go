@@ -101,9 +101,16 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 
 	var textureX int
 	if rl.Vector2Equals(minRay, hRay) {
-		textureX = int(minRay.X) * (cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
+		textureX = (int(minRay.X) * cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
+		if rayAngle < math.Pi {
+			textureX = cellImage.Bounds().Dx() - textureX - 1
+		}
+
 	} else {
-		textureX = int(minRay.Y) * (cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
+		textureX = (int(minRay.Y) * cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
+		if rayAngle > math.Pi/2 && rayAngle < 3*math.Pi/2 {
+			textureX = cellImage.Bounds().Dx() - textureX - 1
+		}
 	}
 
 	if levelmap.IsOnMap(minRay) {

@@ -17,7 +17,7 @@ var resolution = rl.NewVector2(1024, 512)
 func main() {
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.InitWindow(int32(resolution.X), int32(resolution.Y), "raycaster")
-	rl.SetTargetFPS(120)
+	//	rl.SetTargetFPS(120)
 	rl.SetWindowState(rl.FlagWindowResizable)
 	rl.SetConfigFlags(rl.FlagVsyncHint)
 
@@ -69,7 +69,7 @@ func main() {
 			0,
 			color.RGBA{255, 255, 255, 255})
 		rl.DrawText(
-			fmt.Sprintf("average: %0.2f\ncurrent: %d", averageFPS,  rl.GetFPS()),
+			fmt.Sprintf("average: %0.2f\ncurrent: %d", averageFPS, rl.GetFPS()),
 			0, 0, 32, rl.Black,
 		)
 		rl.EndDrawing()
