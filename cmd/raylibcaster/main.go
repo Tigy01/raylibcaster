@@ -21,16 +21,17 @@ func main() {
 
 	p := player.Init(rl.NewVector2(300, 300), 150, 90)
 
-	levelmap.LoadWallImage("./assets/wall32Test.png", 2)
-	levelmap.LoadWallImage("./assets/brickTest.png", 1)
+	levelmap.LoadWallImage("./assets/wall32.png", 2)
+	levelmap.LoadWallImage("./assets/brick.png", 1)
 
 	averageFPS := float64(0)
 	frameCount := float64(0)
+
 	for !rl.WindowShouldClose() {
 		resolution = rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 		resolution = rl.NewVector2(1024, 512)
-
 		renderTex := rl.LoadRenderTexture(int32(resolution.X), int32(resolution.Y))
+
 		p.Input()
 		p.Process()
 
@@ -41,7 +42,22 @@ func main() {
 		rl.EndTextureMode()
 
 		rl.BeginDrawing()
-		rl.ClearBackground(rl.Gray)
+
+		rl.DrawRectangle(
+			0,
+			0,
+			int32(resolution.X),
+			int32(resolution.Y)/2,
+			rl.SkyBlue,
+		) // floor
+
+		rl.DrawRectangle(
+			0,
+			int32(resolution.Y)/2,
+			int32(resolution.X),
+			int32(resolution.Y)/2,
+			rl.Brown,
+		) // floor
 
 		drawRenderTexture(renderTex)
 

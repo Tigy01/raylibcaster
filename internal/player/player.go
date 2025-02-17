@@ -75,13 +75,13 @@ func (p *Player) Input() {
 	}
 
 	if rl.IsKeyDown(rl.KeyA) {
-        p.calculateVelocity(rl.GetFrameTime())
+		p.calculateVelocity(rl.GetFrameTime())
 
 		p.Velocity = rl.NewVector2(p.Velocity.Y, -p.Velocity.X)
 		p.moveAndCollide()
 		p.Velocity = rl.NewVector2(-p.Velocity.Y, p.Velocity.X)
 	} else if rl.IsKeyDown(rl.KeyD) {
-        p.calculateVelocity(rl.GetFrameTime())
+		p.calculateVelocity(rl.GetFrameTime())
 
 		p.Velocity = rl.NewVector2(-p.Velocity.Y, p.Velocity.X)
 		p.moveAndCollide()
@@ -93,7 +93,7 @@ func (p *Player) Input() {
 		p.moveAndCollide()
 	}
 	if rl.IsKeyDown(rl.KeyS) {
-        p.calculateVelocity(rl.GetFrameTime())
+		p.calculateVelocity(rl.GetFrameTime())
 		p.Velocity = rl.Vector2Scale(p.Velocity, -1)
 
 		p.moveAndCollide()
@@ -112,19 +112,27 @@ func (p *Player) Input() {
 }
 
 func (p *Player) moveAndCollide() {
-	nextPos := rl.Vector2Add(p.Position, p.Velocity)
-	if levelmap.GetMapCellFromPosition(nextPos) == 0 {
-		p.Position = nextPos
+	nextCollisionPos := rl.Vector2Add(p.Position, rl.Vector2Scale(p.Velocity, 3))
+	nextActualPos := rl.Vector2Add(p.Position, p.Velocity)
+	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+		p.Position = nextActualPos
 		return
 	}
-	nextXPos := rl.Vector2Add(p.Position, rl.NewVector2(p.Velocity.X, 0))
-	if levelmap.GetMapCellFromPosition(nextXPos) == 0 {
-		p.Position = nextXPos
+
+	xOnlyVelocity := rl.NewVector2(p.Velocity.X, 0)
+
+	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(xOnlyVelocity, 3))
+	nextActualPos = rl.Vector2Add(p.Position, xOnlyVelocity)
+	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+		p.Position = nextActualPos
 		return
 	}
-	nextYPos := rl.Vector2Add(p.Position, rl.NewVector2(0, p.Velocity.Y))
-	if levelmap.GetMapCellFromPosition(nextYPos) == 0 {
-		p.Position = nextYPos
+	YOnlyVelocity := rl.NewVector2(0, p.Velocity.Y)
+
+	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(YOnlyVelocity, 3))
+	nextActualPos = rl.Vector2Add(p.Position, YOnlyVelocity)
+	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+		p.Position = nextActualPos
 		return
 	}
 }
