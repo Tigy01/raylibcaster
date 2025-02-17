@@ -17,14 +17,14 @@ var resolution = rl.NewVector2(1024, 512)
 func main() {
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.InitWindow(int32(resolution.X), int32(resolution.Y), "raycaster")
-	//rl.SetTargetFPS(120)
+	rl.SetTargetFPS(120)
 	rl.SetWindowState(rl.FlagWindowResizable)
 	rl.SetConfigFlags(rl.FlagVsyncHint)
 
 	p := player.Init(rl.NewVector2(300, 300), 150, 90)
 
-	levelmap.LoadWallImage("./assets/wall32.png", 2)
-	levelmap.LoadWallImage("./assets/brick.png", 1)
+	levelmap.LoadWallImage("./assets/wall32Test.png", 2)
+	levelmap.LoadWallImage("./assets/brickTest.png", 1)
 
 	file, err := os.Create("./pprof")
 	if err != nil {
@@ -69,7 +69,7 @@ func main() {
 			0,
 			color.RGBA{255, 255, 255, 255})
 		rl.DrawText(
-			fmt.Sprint("average: ", averageFPS, fmt.Sprint("\ncurrent: ", rl.GetFPS())),
+			fmt.Sprintf("average: %0.2f\ncurrent: %d", averageFPS,  rl.GetFPS()),
 			0, 0, 32, rl.Black,
 		)
 		rl.EndDrawing()

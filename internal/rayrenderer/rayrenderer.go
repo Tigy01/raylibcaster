@@ -57,6 +57,8 @@ func calcNextViewAngle(distToPlane float64, rayNumber float64) float64 {
 }
 
 func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan chan bool) {
+	defer func() { doneChan <- true }()
+
 	hRay, _, minRay := castRayFromPosition(p.Position, rayAngle)
 	rayLen := rl.Vector2Length(rl.Vector2Subtract(minRay, p.Position))
 
@@ -75,11 +77,14 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 
 	var cellImage image.Image
 	if cI, ok := levelmap.Images.Load(cellType); !ok {
-		log.Fatalf("invalid image id %v", cellType)
+		if cellType == 0 {
+			return // ray will not be drawn but function will continue
+		}
+		log.Fatalf("invalid image id %v\n", cellType)
 		return
 	} else {
 		if cellImage, ok = cI.(image.Image); !ok {
-			log.Fatalf("Image not loaded properly at id:%v", cellType)
+			log.Fatalf("Image not loaded properly at id:%v\n", cellType)
 		}
 	}
 
@@ -92,7 +97,7 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 		lineH = RenderRes.Y
 	}
 
-	lineO := RenderRes.Y/2 - lineH/2
+	lineO := (RenderRes.Y - lineH) / 2.0
 
 	var textureX int
 	if rl.Vector2Equals(minRay, hRay) {
@@ -104,11 +109,10 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 	if levelmap.IsOnMap(minRay) {
 		MapTextureToFrame(cellImage, textureX, ty_step*textureYOff, ty_step, rayNumber, lineO, lineH)
 	}
-	doneChan <- true
 }
 
 func MapTextureToFrame(cellImage image.Image, textureX int, textureY, step float32, x int, lineO, lineH float32) {
-	oldTy := 0
+	oldTy := -1
 	var rgba color.RGBA
 	for y := float32(0); y < lineH; y++ {
 		if oldTy != int(textureY) { //prevents reatlasing the texture every pixel
@@ -123,6 +127,7 @@ func MapTextureToFrame(cellImage image.Image, textureX int, textureY, step float
 }
 
 func DrawColorToFrame(x, y int, color color.RGBA) {
+	y = int(RenderRes.Y-1) - y // flips y coordinate because its flipped in the render texture
 	index := y*int(RenderRes.X) + x
 	currentFrame[index] = color
 }
