@@ -26,7 +26,6 @@ func main() {
 	levelmap.LoadWallImage("./assets/wall32.png", 2)
 	levelmap.LoadWallImage("./assets/brick.png", 1)
 
-	renderTex := rl.LoadRenderTexture(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()))
 	file, err := os.Create("./pprof")
 	if err != nil {
 		return
@@ -36,10 +35,13 @@ func main() {
 	averageFPS := float64(0)
 	frameCount := float64(0)
 	for !rl.WindowShouldClose() {
+		resolution = rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
+		resolution = rl.NewVector2(1024, 512)
+
+		renderTex := rl.LoadRenderTexture(int32(resolution.X), int32(resolution.Y))
 		p.Input()
 		p.Process()
 
-		resolution = rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 		rl.BeginTextureMode(renderTex)
 
 		rayrenderer.DrawRays3D(renderTex, *p, resolution)
@@ -75,6 +77,7 @@ func main() {
 		frameCount += 1
 
 		averageFPS = averageFPS*(frameCount-1)/frameCount + float64(rl.GetFPS())/frameCount
+		rl.UnloadRenderTexture(renderTex)
 	}
 	pprof.StopCPUProfile()
 

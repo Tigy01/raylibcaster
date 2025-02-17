@@ -1,7 +1,9 @@
 package rayrenderer
 
 import (
+	"image"
 	"image/color"
+	"log"
 	"math"
 	"raylibcaster/internal/levelmap"
 	"raylibcaster/internal/player"
@@ -9,20 +11,11 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-const RESOLUTION = 1.0
-const RAYOFFSET = rl.Deg2rad / RESOLUTION
-
-var lineWidth int = RESOLUTION
-var screenRes rl.Vector2
-
 var RenderRes rl.Vector2
-var RenderResXInt int
 var currentFrame []color.RGBA
 
 func DrawRays3D(renderTexture rl.RenderTexture2D, p player.Player, screenResolution rl.Vector2) {
-	screenRes = screenResolution
 	RenderRes = screenResolution //rl.Vector2Scale(screenRes, 1/RESOLUTION)
-	RenderResXInt = int(RenderRes.X)
 
 	distToPlane := calcDistanceToViewPlane(float64(p.FOV))
 	currentFrame = make([]color.RGBA, int(RenderRes.X*RenderRes.Y))
@@ -79,7 +72,18 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 	lineH := float32(levelmap.MapScale) * RenderRes.Y / rayLen
 
 	cellType := levelmap.GetMapCellFromPosition(minRay)
-	ty_step := float32(levelmap.Images[cellType].Bounds().Dy()) / lineH
+
+	var cellImage image.Image
+	if cI, ok := levelmap.Images.Load(cellType); !ok {
+		log.Fatalf("invalid image id %v", cellType)
+		return
+	} else {
+		if cellImage, ok = cI.(image.Image); !ok {
+			log.Fatalf("Image not loaded properly at id:%v", cellType)
+		}
+	}
+
+	ty_step := float32(cellImage.Bounds().Dy()) / lineH
 
 	var textureYOff float32 = 0
 
@@ -92,23 +96,23 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 
 	var textureX int
 	if rl.Vector2Equals(minRay, hRay) {
-		textureX = int(minRay.X) % levelmap.Images[cellType].Bounds().Dx()
+		textureX = int(minRay.X) % cellImage.Bounds().Dx()
 	} else {
-		textureX = int(minRay.Y) % levelmap.Images[cellType].Bounds().Dx()
+		textureX = int(minRay.Y) % cellImage.Bounds().Dx()
 	}
 
 	if levelmap.IsOnMap(minRay) {
-		MapTextureToFrame(textureX, ty_step*textureYOff, ty_step, rayNumber*lineWidth, lineO, lineH)
+		MapTextureToFrame(cellImage, textureX, ty_step*textureYOff, ty_step, rayNumber, lineO, lineH)
 	}
-    doneChan<- true
+	doneChan <- true
 }
 
-func MapTextureToFrame(textureX int, textureY, step float32, x int, lineO, lineH float32) {
+func MapTextureToFrame(cellImage image.Image, textureX int, textureY, step float32, x int, lineO, lineH float32) {
 	oldTy := 0
 	var rgba color.RGBA
 	for y := float32(0); y < lineH; y++ {
-		if oldTy != int(textureY) {
-			c := levelmap.Images[1].At(textureX, int(textureY))
+		if oldTy != int(textureY) { //prevents reatlasing the texture every pixel
+			c := cellImage.At(textureX, int(textureY))
 			r, g, b, a := c.RGBA()
 			rgba = color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 			oldTy = int(textureY)
@@ -119,7 +123,7 @@ func MapTextureToFrame(textureX int, textureY, step float32, x int, lineO, lineH
 }
 
 func DrawColorToFrame(x, y int, color color.RGBA) {
-	index := y*RenderResXInt + x
+	index := y*int(RenderRes.X) + x
 	currentFrame[index] = color
 }
 
@@ -217,12 +221,12 @@ func verticalChecks(position rl.Vector2, rayAngle float64) (rPos rl.Vector2) {
 }
 
 func drawRayLine(startPos, endPos rl.Vector2, color color.RGBA) {
-	if endPos.X > screenRes.X {
+	if endPos.X > RenderRes.X {
 		xDiff := endPos.X - startPos.X
 		angle := math.Atan2(float64(endPos.Y-startPos.Y), float64(xDiff))
-		yCoord := (screenRes.X - startPos.X) * float32(math.Tan(angle))
+		yCoord := (RenderRes.X - startPos.X) * float32(math.Tan(angle))
 		endPos.Y = yCoord + startPos.Y
-		endPos.X = screenRes.X
+		endPos.X = RenderRes.X
 	}
 	rl.DrawLineV(
 		startPos,
