@@ -112,32 +112,30 @@ func (p *Player) Input() {
 }
 
 func (p *Player) moveAndCollide() {
-	nextCollisionPos := rl.Vector2Add(p.Position, rl.Vector2Scale(p.Velocity, 3))
+	var offsetDir rl.Vector2 = rl.NewVector2(0, 0)
+	var offsetDistance int = 5
+	if p.Velocity.X < 0 {
+		offsetDir.X -= 1
+	} else if p.Velocity.X > 0 {
+		offsetDir.X += 1
+	}
+	if p.Velocity.Y < 0 {
+		offsetDir.Y -= 1
+	} else if p.Velocity.Y > 0 {
+		offsetDir.Y += 1
+
+	}
 	nextActualPos := rl.Vector2Add(p.Position, p.Velocity)
-	cell := levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
-		p.Position = nextActualPos
-		return
+
+	for distance := offsetDistance; distance > 0; distance-- {
+        nextCollisionPos := rl.Vector2Add(p.Position, rl.Vector2Scale(offsetDir, float32(distance+1)))
+        cell := levelmap.GetMapCellFromPosition(nextCollisionPos)
+        if (cell != nil && cell.IsWall) || !levelmap.IsOnMap(nextCollisionPos) {
+            return
+        }
 	}
 
-	xOnlyVelocity := rl.NewVector2(p.Velocity.X, 0)
-
-	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(xOnlyVelocity, 3))
-	nextActualPos = rl.Vector2Add(p.Position, xOnlyVelocity)
-	cell = levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
-		p.Position = nextActualPos
-		return
-	}
-	YOnlyVelocity := rl.NewVector2(0, p.Velocity.Y)
-
-	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(YOnlyVelocity, 3))
-	nextActualPos = rl.Vector2Add(p.Position, YOnlyVelocity)
-	cell = levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
-		p.Position = nextActualPos
-		return
-	}
+	p.Position = nextActualPos
 }
 
 func (p *Player) calculateVelocity(delta float32) {

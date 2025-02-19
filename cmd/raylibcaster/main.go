@@ -15,7 +15,7 @@ var resolution = rl.NewVector2(1024, 512)
 func main() {
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.InitWindow(int32(resolution.X), int32(resolution.Y), "raycaster")
-	//	rl.SetTargetFPS(120)
+	rl.SetTargetFPS(120)
 	rl.SetWindowState(rl.FlagWindowResizable)
 	rl.SetConfigFlags(rl.FlagVsyncHint)
 
