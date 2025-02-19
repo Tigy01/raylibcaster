@@ -11,8 +11,6 @@ import (
 )
 
 var MapScale int32 = 64 
-var MapX int32 = 12
-var MapY int32 = 12
 
 type MapCell struct {
 	Texture image.Image
@@ -37,9 +35,9 @@ var Map = [][]int{
 var Cells sync.Map
 
 func DrawMap() {
-	for y := range MapY {
-		for x := range MapX {
-			position := rl.NewVector2(float32(x*MapScale), float32(y*MapScale))
+	for y, row := range Map {
+		for x := range row {
+			position := rl.NewVector2(float32(x*int(MapScale)), float32(y*int(MapScale)))
 			if Map[y][x] == 1 {
 				drawPixel(position, float32(MapScale-1), color.RGBA{255, 255, 255, 255})
 			} else {

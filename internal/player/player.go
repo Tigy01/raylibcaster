@@ -1,7 +1,6 @@
 package player
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 	"raylibcaster/internal/levelmap"
@@ -110,7 +109,6 @@ func (p *Player) Input() {
 			p.FOV -= 1
 		}
 	}
-	fmt.Println(p.Position)
 }
 
 func (p *Player) moveAndCollide() {
