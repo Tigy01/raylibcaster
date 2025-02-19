@@ -69,13 +69,23 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 		angleDelta -= 2 * math.Pi
 	}
 
+	if levelmap.IsOnMap(minRay) {
+		MapTextureToFrame(rayNumber, minRay, hRay, rayAngle, angleDelta, rayLen)
+	}
+}
+
+func MapTextureToFrame(pixelX int, minRay, hRay rl.Vector2, rayAngle, angleDelta float64, rayLen float32) {
+	shade := 250 / rayLen
+	if shade > 1 {
+		shade = 1
+	}
+
 	rayLen *= float32(math.Cos(angleDelta)) // fix warping
 
 	lineH := float32(levelmap.MapScale) * RenderRes.Y / rayLen
 
-	cellType := levelmap.GetMapCellFromPosition(minRay)
-
 	var cellImage image.Image
+	cellType := levelmap.GetMapCellFromPosition(minRay)
 	if cI, ok := levelmap.Images.Load(cellType); !ok {
 		if cellType == 0 {
 			return // ray will not be drawn but function will continue
@@ -85,52 +95,66 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 	} else {
 		if cellImage, ok = cI.(image.Image); !ok {
 			log.Fatalf("Image not loaded properly at id:%v\n", cellType)
+			return
 		}
 	}
 
-	ty_step := float32(cellImage.Bounds().Dy()) / lineH
+	textureY, ty_step := getTextureY(cellImage, lineH)
+	textureX := getTextureX(minRay, hRay, rayAngle, cellImage)
 
+	lineH = rl.Clamp(lineH, 0, RenderRes.Y)
+	lineO := (RenderRes.Y - lineH) / 2.0
+	oldTy := -1
+
+	var rgba color.RGBA
+	for y := float32(0); y < lineH; y++ {
+		if oldTy != int(textureY) { //prevents reatlasing the texture every pixel
+			rgba = getRGBA(cellImage, textureX, int(textureY))
+			rgba.R = uint8(float64(uint32(rgba.R)) * float64(shade))
+			rgba.G = uint8(float64(uint32(rgba.G)) * float64(shade))
+			rgba.B = uint8(float64(uint32(rgba.B)) * float64(shade))
+			oldTy = int(textureY)
+		}
+		DrawColorToFrame(pixelX, int(y+lineO), rgba)
+		textureY += ty_step
+	}
+}
+
+func getTextureY(cellImage image.Image, lineH float32) (textureY, ty_step float32) {
+	ty_step = float32(cellImage.Bounds().Dy()) / lineH
 	var textureYOff float32 = 0
-
 	if lineH > RenderRes.Y {
 		textureYOff = (lineH - RenderRes.Y) / 2.0
-		lineH = RenderRes.Y
 	}
+	textureY = ty_step * textureYOff
+	return
+}
 
-	lineO := (RenderRes.Y - lineH) / 2.0
-
-	var textureX int
+func getTextureX(minRay, hRay rl.Vector2, rayAngle float64, cellImage image.Image) (textureX int) {
 	if rl.Vector2Equals(minRay, hRay) {
 		textureX = (int(minRay.X) * cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
 		if rayAngle < math.Pi {
 			textureX = cellImage.Bounds().Dx() - textureX - 1
 		}
-
 	} else {
 		textureX = (int(minRay.Y) * cellImage.Bounds().Dx() / int(levelmap.MapScale)) % cellImage.Bounds().Dx()
 		if rayAngle > math.Pi/2 && rayAngle < 3*math.Pi/2 {
 			textureX = cellImage.Bounds().Dx() - textureX - 1
 		}
 	}
-
-	if levelmap.IsOnMap(minRay) {
-		MapTextureToFrame(cellImage, textureX, ty_step*textureYOff, ty_step, rayNumber, lineO, lineH)
-	}
+	return
 }
 
-func MapTextureToFrame(cellImage image.Image, textureX int, textureY, step float32, x int, lineO, lineH float32) {
-	oldTy := -1
-	var rgba color.RGBA
-	for y := float32(0); y < lineH; y++ {
-		if oldTy != int(textureY) { //prevents reatlasing the texture every pixel
-			c := cellImage.At(textureX, int(textureY))
-			r, g, b, a := c.RGBA()
-			rgba = color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
-			oldTy = int(textureY)
-		}
-		DrawColorToFrame(x, int(y+lineO), rgba)
-		textureY += step
+func getRGBA(cellImage image.Image, x, y int) color.RGBA {
+	c := cellImage.At(x, y)
+	r, g, b, a := c.RGBA()
+	rgba := color.RGBA{
+		uint8(r),
+		uint8(g),
+		uint8(b),
+		uint8(a),
 	}
+	return rgba
 }
 
 func DrawColorToFrame(x, y int, color color.RGBA) {
@@ -158,6 +182,8 @@ func getShortestRay(ray1, ray2 rl.Vector2) rl.Vector2 {
 	return ray2
 }
 
+const MAX_DOF = 12
+
 func horizontalChecks(playerPos rl.Vector2, rayAngle float64) (rPos rl.Vector2) {
 	var dof int
 	var xOffset, yOffset float64
@@ -179,12 +205,12 @@ func horizontalChecks(playerPos rl.Vector2, rayAngle float64) (rPos rl.Vector2) 
 	if rayAngle == 0 || rayAngle == math.Pi || rayAngle == 2*math.Pi {
 		rayX = float64(playerPos.X)
 		rayY = float64(playerPos.Y)
-		dof = 8
+		dof = MAX_DOF
 	}
 
-	for dof < 8 {
+	for dof < MAX_DOF {
 		if levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))) > 0 {
-			dof = 8
+			dof = MAX_DOF
 		} else {
 			rayX += xOffset
 			rayY += yOffset
@@ -216,12 +242,12 @@ func verticalChecks(position rl.Vector2, rayAngle float64) (rPos rl.Vector2) {
 	if rayAngle == math.Pi/2 || rayAngle == 3*math.Pi/2 {
 		rayX = float64(position.X)
 		rayY = float64(position.Y)
-		dof = 8
+		dof = MAX_DOF
 	}
 
-	for dof < 8 {
+	for dof < MAX_DOF {
 		if levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))) > 0 {
-			dof = 8
+			dof = MAX_DOF
 		} else {
 			rayX += xOffset
 			rayY += yOffset
