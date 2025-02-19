@@ -187,7 +187,8 @@ func horizontalChecks(playerPos rl.Vector2, rayAngle float64) (rPos rl.Vector2) 
 	var rayX, rayY float64
 	aTan := -1.0 / math.Tan(rayAngle)
 
-	rayY = float64((int(playerPos.Y) >> 6) << 6)
+//	rayY = float64((int(playerPos.Y) >> 6) << 6)
+	rayY = float64((int(playerPos.Y) /int(levelmap.MapScale) ) * int(levelmap.MapScale))
 	yOffset = float64(levelmap.MapScale)
 	if rayAngle > math.Pi { //up
 		rayY -= 0.0001
@@ -223,7 +224,8 @@ func verticalChecks(position rl.Vector2, rayAngle float64) (rPos rl.Vector2) {
 	var dof int
 	nTan := -math.Tan(rayAngle)
 
-	rayX = float64((int(position.X) >> 6) << 6)
+//	rayX = float64((int(position.X) >> 6) << 6)
+	rayX = float64((int(position.X) /int(levelmap.MapScale) ) * int(levelmap.MapScale))
 	xOffset = float64(levelmap.MapScale)
 	if rayAngle > math.Pi/2 && rayAngle < 3*math.Pi/2 {
 		rayX -= 0.0001

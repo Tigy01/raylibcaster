@@ -1,6 +1,7 @@
 package player
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"raylibcaster/internal/levelmap"
@@ -109,13 +110,14 @@ func (p *Player) Input() {
 			p.FOV -= 1
 		}
 	}
+	fmt.Println(p.Position)
 }
 
 func (p *Player) moveAndCollide() {
 	nextCollisionPos := rl.Vector2Add(p.Position, rl.Vector2Scale(p.Velocity, 3))
 	nextActualPos := rl.Vector2Add(p.Position, p.Velocity)
-    cell:=levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
+	cell := levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
 		p.Position = nextActualPos
 		return
 	}
@@ -124,8 +126,8 @@ func (p *Player) moveAndCollide() {
 
 	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(xOnlyVelocity, 3))
 	nextActualPos = rl.Vector2Add(p.Position, xOnlyVelocity)
-    cell=levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
+	cell = levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
 		p.Position = nextActualPos
 		return
 	}
@@ -133,8 +135,8 @@ func (p *Player) moveAndCollide() {
 
 	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(YOnlyVelocity, 3))
 	nextActualPos = rl.Vector2Add(p.Position, YOnlyVelocity)
-    cell=levelmap.GetMapCellFromPosition(nextCollisionPos)
-	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
+	cell = levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall) && levelmap.IsOnMap(nextCollisionPos) {
 		p.Position = nextActualPos
 		return
 	}
