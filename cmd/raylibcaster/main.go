@@ -28,9 +28,9 @@ func main() {
 	frameCount := float64(0)
 
 	for !rl.WindowShouldClose() {
-		resolution = rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 		resolution = rl.NewVector2(1024, 512)
 		renderTex := rl.LoadRenderTexture(int32(resolution.X), int32(resolution.Y))
+		resolution = rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight()))
 
 		p.Input()
 		p.Process()
