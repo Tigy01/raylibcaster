@@ -114,7 +114,8 @@ func (p *Player) Input() {
 func (p *Player) moveAndCollide() {
 	nextCollisionPos := rl.Vector2Add(p.Position, rl.Vector2Scale(p.Velocity, 3))
 	nextActualPos := rl.Vector2Add(p.Position, p.Velocity)
-	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+    cell:=levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
 		p.Position = nextActualPos
 		return
 	}
@@ -123,7 +124,8 @@ func (p *Player) moveAndCollide() {
 
 	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(xOnlyVelocity, 3))
 	nextActualPos = rl.Vector2Add(p.Position, xOnlyVelocity)
-	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+    cell=levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
 		p.Position = nextActualPos
 		return
 	}
@@ -131,7 +133,8 @@ func (p *Player) moveAndCollide() {
 
 	nextCollisionPos = rl.Vector2Add(p.Position, rl.Vector2Scale(YOnlyVelocity, 3))
 	nextActualPos = rl.Vector2Add(p.Position, YOnlyVelocity)
-	if levelmap.GetMapCellFromPosition(nextCollisionPos) == 0 {
+    cell=levelmap.GetMapCellFromPosition(nextCollisionPos)
+	if (cell == nil || !cell.IsWall ) && levelmap.IsOnMap(nextCollisionPos){
 		p.Position = nextActualPos
 		return
 	}

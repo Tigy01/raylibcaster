@@ -3,7 +3,6 @@ package rayrenderer
 import (
 	"image"
 	"image/color"
-	"log"
 	"math"
 	"raylibcaster/internal/levelmap"
 	"raylibcaster/internal/player"
@@ -75,7 +74,7 @@ func drawRayWall3D(p player.Player, rayAngle float64, rayNumber int, doneChan ch
 }
 
 func MapTextureToFrame(pixelX int, minRay, hRay rl.Vector2, rayAngle, angleDelta float64, rayLen float32) {
-	shade := 250 / rayLen
+	shade := float64(250 / rayLen)
 	if shade > 1 {
 		shade = 1
 	}
@@ -84,20 +83,13 @@ func MapTextureToFrame(pixelX int, minRay, hRay rl.Vector2, rayAngle, angleDelta
 
 	lineH := float32(levelmap.MapScale) * RenderRes.Y / rayLen
 
-	var cellImage image.Image
-	cellType := levelmap.GetMapCellFromPosition(minRay)
-	if cI, ok := levelmap.Images.Load(cellType); !ok {
-		if cellType == 0 {
-			return // ray will not be drawn but function will continue
-		}
-		log.Fatalf("invalid image id %v\n", cellType)
+	var cell *levelmap.MapCell = levelmap.GetMapCellFromPosition(minRay)
+	if cell == nil || !cell.IsWall {
 		return
-	} else {
-		if cellImage, ok = cI.(image.Image); !ok {
-			log.Fatalf("Image not loaded properly at id:%v\n", cellType)
-			return
-		}
 	}
+
+	//	cellImage := cell
+	var cellImage image.Image = cell.Texture
 
 	textureY, ty_step := getTextureY(cellImage, lineH)
 	textureX := getTextureX(minRay, hRay, rayAngle, cellImage)
@@ -110,14 +102,19 @@ func MapTextureToFrame(pixelX int, minRay, hRay rl.Vector2, rayAngle, angleDelta
 	for y := float32(0); y < lineH; y++ {
 		if oldTy != int(textureY) { //prevents reatlasing the texture every pixel
 			rgba = getRGBA(cellImage, textureX, int(textureY))
-			rgba.R = uint8(float64(uint32(rgba.R)) * float64(shade))
-			rgba.G = uint8(float64(uint32(rgba.G)) * float64(shade))
-			rgba.B = uint8(float64(uint32(rgba.B)) * float64(shade))
+			rgba = changeBrightness(rgba, shade)
 			oldTy = int(textureY)
 		}
 		DrawColorToFrame(pixelX, int(y+lineO), rgba)
 		textureY += ty_step
 	}
+}
+
+func changeBrightness(rgba color.RGBA, shade float64) color.RGBA {
+	rgba.R = uint8(float64(uint32(rgba.R)) * shade)
+	rgba.G = uint8(float64(uint32(rgba.G)) * shade)
+	rgba.B = uint8(float64(uint32(rgba.B)) * shade)
+	return rgba
 }
 
 func getTextureY(cellImage image.Image, lineH float32) (textureY, ty_step float32) {
@@ -209,7 +206,7 @@ func horizontalChecks(playerPos rl.Vector2, rayAngle float64) (rPos rl.Vector2) 
 	}
 
 	for dof < MAX_DOF {
-		if levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))) > 0 {
+		if cell := levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))); cell != nil && cell.IsWall {
 			dof = MAX_DOF
 		} else {
 			rayX += xOffset
@@ -246,7 +243,7 @@ func verticalChecks(position rl.Vector2, rayAngle float64) (rPos rl.Vector2) {
 	}
 
 	for dof < MAX_DOF {
-		if levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))) > 0 {
+		if cell := levelmap.GetMapCellFromPosition(rl.NewVector2(float32(rayX), float32(rayY))); cell != nil && cell.IsWall {
 			dof = MAX_DOF
 		} else {
 			rayX += xOffset

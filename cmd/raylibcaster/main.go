@@ -21,8 +21,8 @@ func main() {
 
 	p := player.Init(rl.NewVector2(300, 300), 150, 90)
 
-	levelmap.LoadWallImage("./assets/wall32.png", 2)
-	levelmap.LoadWallImage("./assets/brick.png", 1)
+	levelmap.LoadImage("./assets/wall32.png", 2, false)
+	levelmap.LoadImage("./assets/brick.png", 1, true)
 
 	averageFPS := float64(0)
 	frameCount := float64(0)
